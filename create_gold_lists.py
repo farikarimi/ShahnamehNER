@@ -12,18 +12,6 @@ CTX.check_hostname = False
 CTX.verify_mode = ssl.CERT_NONE
 
 
-def get_shahnameh_lists():
-    page_resp = urllib.request.urlopen('https://fa.wikipedia.org/wiki/%D8%B1%D8%AF%D9%87:%D9%81%D9%87%D8%B1%D8%B3%'
-                                       'D8%AA%E2%80%8C%D9%87%D8%A7%DB%8C_%D8%B4%D8%A7%D9%87%D9%86%D8%A7%D9%85%D9%87',
-                                       context=CTX)
-    page_soup = BeautifulSoup(page_resp, 'lxml')
-    # save title and link of all Shahnameh list pages in a dict
-    lists_dict = {}
-    for li in page_soup.find('div', {'class': 'mw-category-group'}).ul.find_all('li'):
-        lists_dict[li.a['title']] = li.a['href']
-    return lists_dict
-
-
 def get_list_content(page_link):
     if 'https' not in page_link:
         page_link = 'https://fa.wikipedia.org/' + page_link
@@ -50,13 +38,12 @@ def clean_names(lst):
             print('removed non-name\n')
             continue
         if '/' in name:
-            print('split into:', name.split('/'))
-            clean_names(name.split('/'))
-            continue
+            # TODO: the second name is not being added to clean_list
+            name = name.split('/')[0]
         # TODO: make all re.sub() replacements in one statement:
         #  https://stackoverflow.com/questions/33642522/python-regex-sub-with-multiple-patterns
         if '(' in name:
-            name = re.sub(r'\(.+\)', '', name)
+            name = re.sub(r'\s?\(.+\)', '', name)
             print('removed further description in parentheses:', name)
         if 'استان' in name:
             name = re.sub(r'^استان ', '', name)
@@ -64,15 +51,20 @@ def clean_names(lst):
         if 'بانوی ' in name:
             name = re.sub(r'^بانوی ', '', name)
             print('removed "lady":', name)
-        if any(word in name for word in [' پسر', ' دختر']):
-            name = re.sub(r'\s{1}(پسر|دختر).+', '', name)
-            print('removed "son/daughter of":', name)
+        if any(word in name for word in [' پسر', ' دختر', ' پور', ' پدر', ' ‌شاه', ' دوره', ' همسر']):
+            name = re.sub(r'\s(پسر|دختر|پور|پدر|‌شاه|دوره|همسر).+', '', name)
+            print('removed "son/daughter/father/king/of the period/partner of":', name)
+        if name in ['زو', 'شیر', 'چین', 'پیروز', 'پولاد', 'آرزو', 'گرامی', 'فرود', 'مرغ', 'آزاده', 'شام', 'شاهنامه',
+                    'استاد', 'اشک', 'بهمن', 'پارس', 'مشک', 'نار', 'نوش', 'نوشه', 'هشیار']:
+            print('removed ambiguous name\n')
+            continue
         clean_list.append(name.strip())
         print()
     return clean_list
 
 
 def write_names_to_csv(names_set, file_name):
+    # TODO: use pandas for CSV stuff?
     path = 'data/' + file_name + '.csv'
     with open(path, 'w', newline='', encoding='utf-8') as csv_file:
         writer = csv.writer(csv_file)
@@ -80,21 +72,21 @@ def write_names_to_csv(names_set, file_name):
             writer.writerow([name])
 
 
-def create_places_gold_list():
-    places_list = get_list_content('/wiki/%D9%81%D9%87%D8%B1%D8%B3%D8%AA_%D8%AC%D8%A7%DB%8C%E2%80%8C%D9'
-                                   '%87%D8%A7_%D8%AF%D8%B1_%D8%B4%D8%A7%D9%87%D9%86%D8%A7%D9%85%D9%87')
-    write_names_to_csv(set(clean_names(places_list)), 'places_gold_list')
-
-
-def create_characters_gold_list():
-    character_names = []
-    for page_title, link in get_shahnameh_lists().items():
-        if 'جا' not in page_title:
-            character_names.extend(get_list_content(link))
-    write_names_to_csv(set(clean_names(character_names)), 'characters_gold_list')
+def save_gold_list_from_wiki(wiki_url, file_name):
+    gold_list = get_list_content(wiki_url)
+    write_names_to_csv(set(clean_names(gold_list)), file_name)
+    return gold_list
 
 
 if __name__ == '__main__':
-    create_places_gold_list()
-    create_characters_gold_list()
+    print('running create_gold_lists.py...')
+    places_gold_list = save_gold_list_from_wiki(wiki_url='/wiki/%D9%81%D9%87%D8%B1%D8%B3%D8%AA_%D8%AC'
+                                                         '%D8%A7%DB%8C%E2%80%8C%D9%87%D8%A7_%D8%AF%D8%B'
+                                                         '1_%D8%B4%D8%A7%D9%87%D9%86%D8%A7%D9%85%D9%87',
+                                                file_name='places_gold_list')
+
+    characters_gold_list = save_gold_list_from_wiki(wiki_url='/wiki/%D9%81%D9%87%D8%B1%D8%B3%D8%AA_%D8%B4%D8'
+                                                             '%AE%D8%B5%DB%8C%D8%AA%E2%80%8C%D9%87%D8%A7%DB%8'
+                                                             'C_%D8%B4%D8%A7%D9%87%D9%86%D8%A7%D9%85%D9%87',
+                                                    file_name='characters_gold_list')
 
