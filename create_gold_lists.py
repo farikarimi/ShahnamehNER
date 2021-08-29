@@ -38,7 +38,7 @@ def clean_names(lst):
             print('removed non-name\n')
             continue
         if '/' in name:
-            # TODO: the second name is not being added to clean_list
+            # TODO: the second name is not being added to clean_list *cry emoji*
             name = name.split('/')[0]
         # TODO: make all re.sub() replacements in one statement:
         #  https://stackoverflow.com/questions/33642522/python-regex-sub-with-multiple-patterns
@@ -51,13 +51,18 @@ def clean_names(lst):
         if 'بانوی ' in name:
             name = re.sub(r'^بانوی ', '', name)
             print('removed "lady":', name)
-        if any(word in name for word in [' پسر', ' دختر', ' پور', ' پدر', ' ‌شاه', ' دوره', ' همسر']):
-            name = re.sub(r'\s(پسر|دختر|پور|پدر|‌شاه|دوره|همسر).+', '', name)
+        if any(word in name for word in ['پسر', 'دختر', ' پور', 'پدر', 'شاه', 'دوره', 'همسر']):
+            name = re.sub(r'\s\u200c?(پسر|دختر|پور|پدر|شاه|دوره|همسر)(.+)?', '', name)
             print('removed "son/daughter/father/king/of the period/partner of":', name)
         if name in ['زو', 'شیر', 'چین', 'پیروز', 'پولاد', 'آرزو', 'گرامی', 'فرود', 'مرغ', 'آزاده', 'شام', 'شاهنامه',
-                    'استاد', 'اشک', 'بهمن', 'پارس', 'مشک', 'نار', 'نوش', 'نوشه', 'هشیار']:
+                    'استاد', 'اشک', 'بهمن', 'پارس', 'مشک', 'نار', 'نوش', 'نوشه', 'هشیار', 'ناهید', 'شیرین', 'شادان',
+                    'سهی', 'زیبد', 'پرمایه', 'فرخ‌پی', 'بید', 'گلنار', 'طراز']:  # رخش
             print('removed ambiguous name\n')
             continue
+        if '\u200c' in name:
+            name2 = name.replace('\u200c', ' ')
+            print('added variant with space instead of ZWNJ:', name2)
+            clean_list.append(name2.strip())
         clean_list.append(name.strip())
         print()
     return clean_list
