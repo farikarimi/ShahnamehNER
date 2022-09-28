@@ -96,8 +96,10 @@ def replace_spaces_in_names() -> tuple[list[str], list[str], list[str]]:
     return [*modified_locations.values()], [*modified_persons.values()], modified_gold_couplets
 
 
-# TODO: Documentation
 def get_names_for_testing(name_tokens: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """
+    From the given list of name tokens, select five with a high frequency, five with an average frequency and five with
+    a low frequency and return the names in three separate lists."""
     tokens_counts = Counter(name_tokens)
     tokens_counts_sorted = tokens_counts.most_common()
     token_average_freq = ceil(mean([t[1] for t in tokens_counts_sorted]))
@@ -112,7 +114,6 @@ def get_names_for_testing(name_tokens: list[str]) -> tuple[list[str], list[str],
     return five_from_top, five_from_middle, five_from_bottom
 
 
-# TODO: Documentation
 def save_excluded_names_to_csv(names_tuple: tuple[list[str], list[str], list[str]], path: str) -> None:
     """Save each list from the given tuple as a row in a CSV file at the specified path."""
     with open(path, 'w', newline='', encoding='utf-8') as csv_file:
@@ -121,8 +122,10 @@ def save_excluded_names_to_csv(names_tuple: tuple[list[str], list[str], list[str
             writer.writerow(names)
 
 
-# TODO: Documentation
 def save_names_to_exclude() -> list[str]:
+    """
+    Create a list containing 15 person and 15 location entity names that should not be tagged as entities in the
+    training data for testing purposes, pickle and return the list."""
     print(f'\n{time.strftime("%H:%M:%S")}: Getting names to exclude...')
     modified_gold_couplets = unpickle_obj(get_most_recent_file(dir_path='pickles', prefix='modified_gold_couplets'))
     modified_location_names = unpickle_obj(get_most_recent_file(dir_path='pickles', prefix='modified_location_names'))
